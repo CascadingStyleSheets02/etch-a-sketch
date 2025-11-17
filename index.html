@@ -1,0 +1,273 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Etch-a-Sketch</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Arial', sans-serif;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            min-height: 100vh;
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+            align-items: center;
+            padding: 20px;
+        }
+
+        h1 {
+            color: white;
+            margin-bottom: 20px;
+            font-size: 2.5em;
+            text-shadow: 2px 2px 4px rgba(0, 0, 0, 0.3);
+        }
+
+        .controls {
+            margin-bottom: 20px;
+            display: flex;
+            gap: 10px;
+            flex-wrap: wrap;
+            justify-content: center;
+        }
+
+        button {
+            padding: 12px 24px;
+            font-size: 1em;
+            font-weight: bold;
+            border: none;
+            border-radius: 8px;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            box-shadow: 0 4px 6px rgba(0, 0, 0, 0.2);
+        }
+
+        button:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 6px 12px rgba(0, 0, 0, 0.3);
+        }
+
+        button:active {
+            transform: translateY(0);
+        }
+
+        #newGridBtn {
+            background: #2ecc71;
+            color: white;
+        }
+
+        #newGridBtn:hover {
+            background: #27ae60;
+        }
+
+        #clearBtn {
+            background: #e74c3c;
+            color: white;
+        }
+
+        #clearBtn:hover {
+            background: #c0392b;
+        }
+
+        #colorModeBtn {
+            background: #f39c12;
+            color: white;
+        }
+
+        #colorModeBtn:hover {
+            background: #e67e22;
+        }
+
+        #darkenModeBtn {
+            background: #34495e;
+            color: white;
+        }
+
+        #darkenModeBtn:hover {
+            background: #2c3e50;
+        }
+
+        .container {
+            width: 600px;
+            height: 600px;
+            background: white;
+            border: 8px solid #2c3e50;
+            border-radius: 10px;
+            box-shadow: 0 10px 40px rgba(0, 0, 0, 0.3);
+            display: flex;
+            flex-wrap: wrap;
+            overflow: hidden;
+        }
+
+        .grid-square {
+            background: white;
+            transition: background-color 0.1s ease;
+            border: 1px solid #ecf0f1;
+        }
+
+        .info {
+            margin-top: 20px;
+            color: white;
+            text-align: center;
+            font-size: 1.1em;
+        }
+
+        @media (max-width: 700px) {
+            .container {
+                width: 90vw;
+                height: 90vw;
+                max-width: 500px;
+                max-height: 500px;
+            }
+
+            h1 {
+                font-size: 1.8em;
+            }
+        }
+    </style>
+</head>
+<body>
+    <h1>🎨 Etch-a-Sketch</h1>
+    
+    <div class="controls">
+        <button id="newGridBtn">New Grid</button>
+        <button id="clearBtn">Clear</button>
+        <button id="colorModeBtn">Rainbow Mode</button>
+        <button id="darkenModeBtn">Darken Mode</button>
+    </div>
+
+    <div class="container" id="container"></div>
+
+    <div class="info">
+        <p>Current grid: <span id="gridSize">16x16</span></p>
+    </div>
+
+    <script>
+        const container = document.getElementById('container');
+        const newGridBtn = document.getElementById('newGridBtn');
+        const clearBtn = document.getElementById('clearBtn');
+        const colorModeBtn = document.getElementById('colorModeBtn');
+        const darkenModeBtn = document.getElementById('darkenModeBtn');
+        const gridSizeDisplay = document.getElementById('gridSize');
+
+        let currentMode = 'normal'; // 'normal', 'rainbow', or 'darken'
+        let currentGridSize = 16;
+
+        function getRandomRGB() {
+            const r = Math.floor(Math.random() * 256);
+            const g = Math.floor(Math.random() * 256);
+            const b = Math.floor(Math.random() * 256);
+            return `rgb(${r}, ${g}, ${b})`;
+        }
+
+        function createGrid(size) {
+            // Clear existing grid
+            container.innerHTML = '';
+            
+            // Calculate square size
+            const containerSize = container.clientWidth;
+            const squareSize = containerSize / size;
+
+            // Create grid squares
+            for (let i = 0; i < size * size; i++) {
+                const square = document.createElement('div');
+                square.classList.add('grid-square');
+                square.style.width = `${squareSize}px`;
+                square.style.height = `${squareSize}px`;
+                
+                // Set initial data attribute for darkening mode
+                square.dataset.interactions = '0';
+                
+                // Add hover effect
+                square.addEventListener('mouseenter', function() {
+                    if (currentMode === 'normal') {
+                        this.style.backgroundColor = '#3498db';
+                    } else if (currentMode === 'rainbow') {
+                        this.style.backgroundColor = getRandomRGB();
+                    } else if (currentMode === 'darken') {
+                        let interactions = parseInt(this.dataset.interactions);
+                        interactions++;
+                        this.dataset.interactions = interactions;
+                        
+                        // Darken by 10% each interaction (max 10 interactions = 100% opacity)
+                        const opacity = Math.min(interactions * 0.1, 1);
+                        const randomColor = getRandomRGB();
+                        this.style.backgroundColor = randomColor;
+                        this.style.opacity = opacity;
+                    }
+                });
+
+                container.appendChild(square);
+            }
+
+            currentGridSize = size;
+            gridSizeDisplay.textContent = `${size}x${size}`;
+        }
+
+        function clearGrid() {
+            const squares = document.querySelectorAll('.grid-square');
+            squares.forEach(square => {
+                square.style.backgroundColor = 'white';
+                square.style.opacity = '1';
+                square.dataset.interactions = '0';
+            });
+        }
+
+        // New Grid button
+        newGridBtn.addEventListener('click', function() {
+            let size = prompt('Enter number of squares per side (max 100):');
+            size = parseInt(size);
+            
+            if (isNaN(size) || size < 1) {
+                alert('Please enter a valid number!');
+                return;
+            }
+            
+            if (size > 100) {
+                alert('Maximum size is 100. Setting to 100.');
+                size = 100;
+            }
+            
+            createGrid(size);
+        });
+
+        // Clear button
+        clearBtn.addEventListener('click', clearGrid);
+
+        // Color mode button
+        colorModeBtn.addEventListener('click', function() {
+            if (currentMode === 'rainbow') {
+                currentMode = 'normal';
+                this.textContent = 'Rainbow Mode';
+                this.style.backgroundColor = '#f39c12';
+            } else {
+                currentMode = 'rainbow';
+                this.textContent = 'Normal Mode';
+                this.style.backgroundColor = '#9b59b6';
+            }
+        });
+
+        // Darken mode button
+        darkenModeBtn.addEventListener('click', function() {
+            if (currentMode === 'darken') {
+                currentMode = 'normal';
+                this.textContent = 'Darken Mode';
+                this.style.backgroundColor = '#34495e';
+            } else {
+                currentMode = 'darken';
+                this.textContent = 'Normal Mode';
+                this.style.backgroundColor = '#16a085';
+            }
+        });
+
+        // Create initial 16x16 grid
+        createGrid(16);
+    </script>
+</body>
+</html>
